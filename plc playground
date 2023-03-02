@@ -1,0 +1,82 @@
+// Variable Declaration
+VAR
+    Start_PB : BOOL;        // Start Push Button
+    Stop_PB : BOOL;         // Stop Push Button
+    Motor_On : BOOL;        // Motor On Flag
+    Beacon_TP : TP;         // Time Proportional Block for Beacon Signal
+    Beacon_Period : TIME;   // Beacon Signal Period
+    Conveyor_Running : BOOL; // Conveyor Running Flag
+    Object_Detected : BOOL; // Object Detected by Photocell Sensor
+    Photocell_Input : BOOL; // Input for Photocell Sensor
+    Object_Detected_Timer : TON; // Timer to track how long object has been detected
+    Conveyor_Stopped : BOOL; // Conveyor Stopped Flag
+    PLC_Reset_PB : BOOL;    // PLC Reset Push Button
+    HTTP_Request : WORD;    // HTTP Request Variable
+    HTTP_Response : ARRAY[0..255] OF BYTE;    // HTTP Response Variable
+    HTTP_Success : BOOL;    // HTTP Request Success Flag
+END_VAR
+
+// Set up the Beacon Signal Properties
+Beacon_Period := T#50ms;  // Beacon Signal Period is 50ms, which is 20Hz
+Beacon_TP(IN:=FALSE, PT:=Beacon_Period); // Start with beacon signal off
+
+// Set up the Object Detection Timer
+Object_Detected_Timer(IN:=Object_Detected, PT:=T#10s); // 10 second timer
+
+// Logic for controlling the motor, conveyor, and beacon signal
+IF PLC_Reset_PB THEN
+    // Reset the PLC
+    CLEAR;
+ELSIF Start_PB AND NOT Motor_On THEN
+    // Start the motor and conveyor
+    Motor_On := TRUE;
+    Conveyor_Running := TRUE;
+    Beacon_TP(IN:=TRUE);
+ELSIF Stop_PB AND (Motor_On OR Conveyor_Running) THEN
+    // Stop the motor and conveyor
+    Motor_On := FALSE;
+    Conveyor_Running := FALSE;
+    Beacon_TP(IN:=FALSE);
+    Conveyor_Stopped := TRUE; // Set Conveyor Stopped Flag
+ELSE
+    Conveyor_Stopped := FALSE; // Reset Conveyor Stopped Flag
+END_IF
+
+// Read Photocell Sensor Input
+Photocell_Input := <Insert Code to Read Photocell Sensor Input Here>;
+
+// Check for Object Detection by Photocell Sensor
+Object_Detected := NOT Photocell_Input;
+
+IF Object_Detected_Timer.Q THEN
+    // Object has been detected for more than 10 seconds
+    Motor_On := FALSE;
+    Conveyor_Running := FALSE;
+    Beacon_TP(IN:=FALSE);
+    Conveyor_Stopped := TRUE; // Set Conveyor Stopped Flag
+ELSE
+    Conveyor_Stopped := FALSE; // Reset Conveyor Stopped Flag
+END_IF
+
+// Check for Object Detection by Photocell Sensor
+IF Object_Detected THEN
+    Beacon_TP(IN:=NOT Beacon_TP.Q); // Toggle Beacon Signal
+END_IF
+
+// Send Mobile Text Message if Conveyor Stopped
+IF Conveyor_Stopped THEN
+    // Make HTTP Request to Mobile API
+    HTTP_Request := HTTPClientGet(
+        'https://example.com/api/send_text_message?message=Conveyor+Stopped',
+        HTTP_Response,
+        255,
+        HTTP_Success
+    );
+    
+    // Check if HTTP Request was successful
+    IF HTTP_Success THEN
+        // TODO: Handle successful request
+    ELSE
+        // TODO: Handle failed request
+    END_IF
+END_IF
