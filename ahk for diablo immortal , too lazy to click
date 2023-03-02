@@ -1,0 +1,39 @@
+Gui, Add, CheckBox, x2 y0 w30 h20 vum, 1
+Gui, Add, CheckBox, x2 y20 w30 h20 vdois, 2 
+Gui, Add, CheckBox, x2 y40 w30 h20 vtres, 3 
+Gui, Add, CheckBox, x2 y60 w30 h20 vquatro, 4 
+Gui, Add, Edit, x2 y80 w50 h20 vpausa, 500 
+Gui, Add, Button, x60 y0 gsome, Hide 
+Gui, Show, w100 h105, Untitled GUI 
+return 
+F3:: 
+gui, submit, nohide 
+ativo:=1 
+loop{ 
+if(ativo=0){
+ break 
+}
+ if(um=1){
+ send, 1 
+} 
+if(dois=1){
+ send, 2 
+} if(tres=1){
+ send, 3 
+} 
+if(quatro=1){
+ send, 4 
+} sleep, pausa 
+} return 
+some: 
+Gui, Hide 
+return 
+F5::
+Gui, Show 
+return 
+F4:: 
+ativo:=0 
+return 
+GuiClose: 
+ExitApp 
+return
