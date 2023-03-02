@@ -1,0 +1,59 @@
+VAR
+    ObjectDetected1 : BOOL;          // Sensor 1 input (left conveyor)
+    ObjectDetected2 : BOOL;          // Sensor 2 input (right conveyor)
+    MainConveyor : BOOL;             // Main conveyor motor output
+    LeftConveyor : BOOL;             // Left conveyor motor output
+    RightConveyor : BOOL;            // Right conveyor motor output
+    LaserSensor : BOOL;              // Laser sensor input on main conveyor
+    Weight : REAL;                   // Weight of object on main conveyor
+    LiftUp : BOOL;                   // Lift motor output (up)
+    LiftDown : BOOL;                 // Lift motor output (down)
+    UpperLimitSwitch : BOOL;         // Upper limit switch input
+    BottomLimitSwitch : BOOL;        // Bottom limit switch input
+    ObjectWentToLeftConveyor : BOOL;  // Flag indicating if an object went to the left conveyor
+    UnderweightAlarm : BOOL;         // SCADA alarm indicating product is underweight
+END_VAR
+
+// Main program
+WHILE TRUE DO
+    // Check if object is detected on sensor 1
+    IF ObjectDetected1 THEN
+        MainConveyor := FALSE;   // Stop main conveyor motor
+        LeftConveyor := FALSE;   // Stop left conveyor motor
+        RightConveyor := TRUE;   // Start right conveyor motor
+        ObjectWentToLeftConveyor := TRUE;  // Set flag to indicate object went to left conveyor
+        UnderweightAlarm := FALSE;  // Clear the underweight alarm
+    // Check if object is detected on sensor 2
+    ELSIF ObjectDetected2 THEN
+        MainConveyor := FALSE;   // Stop main conveyor motor
+        LeftConveyor := TRUE;    // Start left conveyor motor
+        RightConveyor := FALSE;  // Stop right conveyor motor
+        ObjectWentToLeftConveyor := FALSE;  // Clear flag to indicate object did not go to left conveyor
+        UnderweightAlarm := FALSE;  // Clear the underweight alarm
+    // Check if object is detected on laser sensor
+    ELSIF LaserSensor THEN
+        // Check the weight of the object
+        IF Weight < 100 THEN
+            MainConveyor := FALSE;   // Stop main conveyor motor
+            LeftConveyor := FALSE;   // Stop left conveyor motor
+            RightConveyor := TRUE;   // Start right conveyor motor
+            ObjectWentToLeftConveyor := TRUE;  // Set flag to indicate object went to left conveyor
+            UnderweightAlarm := TRUE;  // Set the underweight alarm
+        ELSE
+            MainConveyor := FALSE;   // Stop main conveyor motor
+            LeftConveyor := TRUE;    // Start left conveyor motor
+            RightConveyor := FALSE;  // Stop right conveyor motor
+            ObjectWentToLeftConveyor := FALSE;  // Clear flag to indicate object did not go to left conveyor
+            UnderweightAlarm := FALSE;  // Clear the underweight alarm
+        END_IF;
+    // No object detected, start main conveyor motor and stop both side conveyors
+    ELSE
+        MainConveyor := TRUE;    // Start main conveyor motor
+        LeftConveyor := FALSE;   // Stop left conveyor motor
+        RightConveyor := FALSE;  // Stop right conveyor motor
+        ObjectWentToLeftConveyor := FALSE;  // Clear flag to indicate object did not go to left conveyor
+        UnderweightAlarm := FALSE;  // Clear the underweight alarm
+    END_IF;
+
+    // Check if object is detected by the lift sensor
+    IF UpperLimit
